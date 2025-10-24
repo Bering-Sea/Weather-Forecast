@@ -53,6 +53,45 @@ docker-compose up -d weather-forecast
 docker-compose logs -f weather-forecast
 ```
 
+### View API health status:
+```bash
+./view_status.sh
+```
+
+### Stop the service:
+```bash
+docker-compose down weather-forecast
+```
+
+## Health Monitoring
+
+The application includes comprehensive health monitoring to ensure data integrity:
+
+- **API availability tracking** - Records every fetch attempt
+- **Stale forecast detection** - Alerts if forecasts are >12 hours old
+- **Outage detection** - Tracks when NWS API is down
+- **Uptime statistics** - Calculates reliability percentage
+- **Status reports** - Generates `forecast_report.txt`
+- **Never serves fake data** - Only real-time NOAA forecasts
+
+### View Status Report
+
+```bash
+cat data/forecast_report.txt
+```
+
+Or use the helper script:
+```bash
+./view_status.sh
+```
+
+The report shows:
+- Current API status (online/offline/stale)
+- Uptime percentage per location
+- Stale forecast warnings
+- Recent outage history
+- Active alerts
+
 ### View forecasts:
 
 **View all forecasts (combined):**

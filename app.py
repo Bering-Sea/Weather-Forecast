@@ -12,6 +12,8 @@ from typing import Dict, List, Optional
 import logging
 import os
 
+from monitor import ForecastMonitor
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -231,6 +233,8 @@ def main():
     logger.info(f"Update interval: {update_interval} seconds")
     
     fetcher = WeatherForecastFetcher(zip_codes)
+    monitor = ForecastMonitor()
+    logger.info("Forecast health monitoring enabled")
     
     while True:
         try:
@@ -313,6 +317,51 @@ def main():
             with open(text_output_file, 'w') as f:
                 f.write(formatted)
             logger.info(f"Saved combined formatted forecast to {text_output_file}")
+            
+            # Record successful attempts for each location
+            for zip_code, zip_data in forecasts.items():
+                # Record local forecast attempt
+                if zip_data.get('local_forecast'):
+                    forecast_time = zip_data['local_forecast'].get('updated')
+                    monitor.record_attempt(
+                        location=zip_code,
+                        forecast_type='local',
+                        success=True,
+                        forecast_time=forecast_time
+                    )
+                else:
+                    monitor.record_attempt(
+                        location=zip_code,
+                        forecast_type='local',
+                        success=False,
+                        error_message="No local forecast data available"
+                    )
+                
+                # Record marine forecast attempt
+                if zip_data.get('marine_forecast'):
+                    for zone_id in zip_data['marine_forecast'].keys():
+                        monitor.record_attempt(
+                            location=zone_id,
+                            forecast_type='marine',
+                            success=True
+                        )
+                else:
+                    monitor.record_attempt(
+                        location=f"{zip_code}_marine",
+                        forecast_type='marine',
+                        success=False,
+                        error_message="No marine forecast data available"
+                    )
+            
+            # Show alerts if any
+            alerts = monitor.get_alert_summary()
+            if alerts:
+                logger.warning("FORECAST ALERTS:")
+                for alert in alerts:
+                    logger.warning(f"  {alert}")
+            
+            # Generate status report
+            monitor.save_report()
             
             logger.info(f"Waiting {update_interval} seconds until next update...")
             time.sleep(update_interval)
