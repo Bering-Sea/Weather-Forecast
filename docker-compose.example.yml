@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  weather-forecast:
+    build: .
+    container_name: weather-forecast
+    restart: unless-stopped
+    environment:
+      # Comma-separated list of zip codes to monitor
+      # Examples:
+      #   Alaska: 99660,99591 (St. Paul & St. George Islands)
+      #   New York: 10001,10002
+      #   California: 90001,90002
+      - ZIP_CODES=99660,99591
+      
+      # Update interval in seconds
+      # 300 = 5 minutes
+      # 1800 = 30 minutes
+      # 3600 = 1 hour (default)
+      # 7200 = 2 hours
+      - UPDATE_INTERVAL=3600
+    volumes:
+      # Mount data directory to persist forecast data
+      - ./data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Note: This app fetches forecasts from NOAA National Weather Service API
+# Find zip codes: https://www.zip-codes.com/
